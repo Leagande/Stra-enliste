@@ -7,37 +7,39 @@ document.getElementById('convert-btn').onclick = function() {
     }
 
     const file = fileInput.files[0];
+    
+    // Original-Dateinamen holen und Endung entfernen
+    // z.B. "Nettetal.csv" -> "Nettetal"
+    const originalName = file.name.replace(/\.[^/.]+$/, "");
+    const newFileName = `${originalName} Fertig.xlsx`;
+
     const reader = new FileReader();
 
     reader.onload = function(e) {
         const text = e.target.result;
-        processCSVtoExcel(text);
+        processCSVtoExcel(text, newFileName);
     };
 
     reader.readAsText(file);
 };
 
-function processCSVtoExcel(csvText) {
+function processCSVtoExcel(csvText, fileName) {
     const lines = csvText.split('\n');
     
-    // Wir sammeln die Daten für Excel
-    // Header-Zeile
+    // Header-Zeile definieren
     let excelData = [['Straße Hausnummer', 'Name', 'Angetroffen', 'Vertrag', 'Wohnlage', 'Kommentar']];
     
-    // Variablen für die Farb-Logik
     let lastAddress = "";
-    let isGray = false; // Startet mit Weiß
-    
-    // Array um zu speichern, welche Zeilen welche Farbe bekommen sollen
+    let isGray = false; 
     let rowStyles = []; 
-    // Header ist Zeile 0, hat keine spezielle Hintergrundfarbe (oder man könnte sie fett machen)
-    rowStyles.push(null); 
+    
+    // Style für Header vormerken (Index 0)
+    rowStyles.push("HEADER"); 
 
     for (let i = 0; i < lines.length; i++) {
         let line = lines[i].trim();
         if (!line) continue;
 
-        // Anführungszeichen entfernen und splitten
         if (line.startsWith('"') && line.endsWith('"')) {
             line = line.substring(1, line.length - 1);
         }
@@ -50,34 +52,26 @@ function processCSVtoExcel(csvText) {
 
         if (isNaN(weCount) || weCount <= 0) continue;
 
-        // --- Farbwechsel-Logik ---
-        // Wenn die Adresse anders ist als die vorherige, Farbe umschalten
         if (address !== lastAddress) {
-            isGray = !isGray; // Umschalten: Wahr -> Falsch -> Wahr...
+            isGray = !isGray;
             lastAddress = address;
         }
 
-        // --- Zeilen erstellen ---
         for (let j = 0; j < weCount; j++) {
-            // Datenzeile hinzufügen
             excelData.push([address, "", "", "", "", ""]);
-            
-            // Merken, ob diese Zeile grau sein soll
-            rowStyles.push(isGray);
+            // Speichern, ob Zeile grau oder weiß sein soll
+            rowStyles.push(isGray ? "GRAY" : "WHITE");
         }
     }
 
-    createAndDownloadExcel(excelData, rowStyles);
+    createAndDownloadExcel(excelData, rowStyles, fileName);
 }
 
-function createAndDownloadExcel(data, styles) {
-    // Ein neues Workbook erstellen
+function createAndDownloadExcel(data, styles, fileName) {
     const wb = XLSX.utils.book_new();
-    
-    // Daten in ein Sheet umwandeln
     const ws = XLSX.utils.aoa_to_sheet(data);
 
-    // Spaltenbreite etwas anpassen (optisch schöner)
+    // Spaltenbreiten definieren
     ws['!cols'] = [
         { wch: 30 }, // Straße
         { wch: 20 }, // Name
@@ -87,63 +81,47 @@ function createAndDownloadExcel(data, styles) {
         { wch: 40 }  // Kommentar
     ];
 
-    // Styles anwenden
-    // Wir iterieren über alle Zellen im Sheet
-    // range decodieren gibt uns den Bereich (z.B. A1 bis F100)
     const range = XLSX.utils.decode_range(ws['!ref']);
     
-    for (let R = range.s.r; R <= range.e.r; ++R) {
-        // Überspringe Header (Zeile 0), falls gewünscht
-        if (R === 0) {
-            // Optional: Header fett machen
-            for (let C = range.s.c; C <= range.e.c; ++C) {
-                const cell_ref = XLSX.utils.encode_cell({c: C, r: R});
-                if (!ws[cell_ref]) ws[cell_ref] = { t: 's', v: '' }; // Leere Zellen absichern
-                ws[cell_ref].s = { 
-                    font: { bold: true },
-                    fill: { fgColor: { rgb: "CCCCCC" } } // Dunkleres Grau für Header
-                }; 
-            }
-            continue;
-        }
+    // Pyur Farben
+    const pyurRed = "E60000"; 
+    const pyurGray = "F5F5F5"; // Sehr helles Grau
+    const white = "FFFFFF";
 
-        // Prüfen ob diese Zeile grau sein soll (basierend auf unserem styles Array)
-        // styles[R] enthält true oder false
-        if (styles[R] === true) {
-            for (let C = range.s.c; C <= range.e.c; ++C) {
-                const cell_ref = XLSX.utils.encode_cell({c: C, r: R});
-                // Falls Zelle leer ist, initialisieren wir sie, damit wir Style anwenden können
-                if (!ws[cell_ref]) ws[cell_ref] = { t: 's', v: '' };
-                
-                // Style Objekt hinzufügen
-                ws[cell_ref].s = {
-                    fill: { fgColor: { rgb: "EEEEEE" } }, // Hellgrau (Hex-Code ohne #)
-                    border: {
-                        top: { style: "thin", color: { auto: 1 } },
-                        bottom: { style: "thin", color: { auto: 1 } },
-                        left: { style: "thin", color: { auto: 1 } },
-                        right: { style: "thin", color: { auto: 1 } }
-                    }
-                };
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+        const styleType = styles[R]; // "HEADER", "GRAY" oder "WHITE"
+
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            const cell_ref = XLSX.utils.encode_cell({c: C, r: R});
+            if (!ws[cell_ref]) ws[cell_ref] = { t: 's', v: '' };
+
+            let cellStyle = {
+                border: {
+                    top: { style: "thin", color: { auto: 1 } },
+                    bottom: { style: "thin", color: { auto: 1 } },
+                    left: { style: "thin", color: { auto: 1 } },
+                    right: { style: "thin", color: { auto: 1 } }
+                },
+                font: { name: "Arial", sz: 11 }
+            };
+
+            if (styleType === "HEADER") {
+                // Header: Pyur Rot, Weiße Schrift, Fett
+                cellStyle.fill = { fgColor: { rgb: pyurRed } };
+                cellStyle.font = { name: "Arial", sz: 12, bold: true, color: { rgb: white } };
+                cellStyle.alignment = { horizontal: "center", vertical: "center" };
+            } else if (styleType === "GRAY") {
+                // Graue Zeile
+                cellStyle.fill = { fgColor: { rgb: pyurGray } };
+            } else {
+                // Weiße Zeile (kein Fill nötig, aber explizit weiß ist sicherer)
+                cellStyle.fill = { fgColor: { rgb: white } };
             }
-        } else {
-            // Auch für weiße Zellen Ränder hinzufügen (sieht sauberer aus)
-            for (let C = range.s.c; C <= range.e.c; ++C) {
-                const cell_ref = XLSX.utils.encode_cell({c: C, r: R});
-                if (!ws[cell_ref]) ws[cell_ref] = { t: 's', v: '' };
-                
-                ws[cell_ref].s = {
-                     border: {
-                        top: { style: "thin", color: { auto: 1 } },
-                        bottom: { style: "thin", color: { auto: 1 } },
-                        left: { style: "thin", color: { auto: 1 } },
-                        right: { style: "thin", color: { auto: 1 } }
-                    }
-                };
-            }
+
+            ws[cell_ref].s = cellStyle;
         }
     }
 
     XLSX.utils.book_append_sheet(wb, ws, "Adressliste");
-    XLSX.writeFile(wb, "D2D_Liste_Farbig.xlsx");
+    XLSX.writeFile(wb, fileName);
 }

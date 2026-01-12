@@ -21,46 +21,45 @@ function processCSV(csvText) {
     const lines = csvText.split('\n');
     let outputRows = [];
     
-    // Kopfzeile für die neue Datei
-    // Spalten: Straße Hausnummer, Name, Angetroffen, Vertrag, Wohnlage, Kommentar
+    // Kopfzeile
     const header = ['Straße Hausnummer', 'Name', 'Angetroffen', 'Vertrag', 'Wohnlage', 'Kommentar'];
     outputRows.push(header.join(';'));
 
-    // Wir überspringen evtl. die erste Zeile, falls es Header sind. 
-    // In deiner Datei fangen Daten oft direkt an oder nach dem Header.
-    // Wir iterieren durch alle Zeilen.
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
+        let line = lines[i].trim();
         if (!line) continue;
 
-        // CSV Parser für Zeilen mit Anführungszeichen (wie in deiner Datei)
-        const columns = parseCSVLine(line);
+        // Wir entfernen die äußeren Anführungszeichen, damit wir sauber trennen können
+        if (line.startsWith('"') && line.endsWith('"')) {
+            line = line.substring(1, line.length - 1);
+        }
 
-        // Sicherheitscheck: Genug Spalten vorhanden?
+        // Wir trennen am Text "," (Anführungszeichen-Komma-Anführungszeichen)
+        // Das ist bei deiner Datei sehr sicher.
+        const columns = line.split('","');
+
+        // Sicherheitscheck
         if (columns.length < 5) continue;
 
-        // Basierend auf deiner Datei "Nettetal Pyür.csv":
-        // Spalte Index 3: Adresse (z.B. "Breyeller Str. 5")
-        // Spalte Index 4: Anzahl WE (z.B. "5")
-        // Hinweis: Arrays starten bei 0.
+        // Spalte 4 ist die Adresse (Index 3)
+        const address = columns[3].trim();
         
-        let address = columns[3]; 
+        // Spalte 5 ist die Anzahl (Index 4)
         let weCount = parseInt(columns[4]);
 
-        // Falls die Header-Zeile erwischt wird (keine Zahl), überspringen
-        if (isNaN(weCount)) continue;
+        // Falls die Zeile keine gültige Anzahl hat (z.B. Überschrift), überspringen
+        if (isNaN(weCount) || weCount <= 0) continue;
 
-        // Zeilen vervielfachen basierend auf WE Anzahl
+        // Zeilen vervielfachen
         for (let j = 0; j < weCount; j++) {
-            // Erstelle eine Zeile: Adresse;;;;;
-            // Semikolon-getrennt für Excel/CSV Öffnung in Deutschland
+            // CSV-Zeile bauen: "Adresse";;;;;
             let row = [
-                `"${address}"`, // Adresse in Anführungszeichen zur Sicherheit
-                "", // Name leer
-                "", // Angetroffen leer
-                "", // Vertrag leer
-                "", // Wohnlage leer
-                ""  // Kommentar leer
+                `"${address}"`, 
+                "", 
+                "", 
+                "", 
+                "", 
+                ""
             ];
             outputRows.push(row.join(';'));
         }
@@ -69,33 +68,12 @@ function processCSV(csvText) {
     downloadCSV(outputRows.join('\n'));
 }
 
-// Hilfsfunktion: CSV Zeile korrekt splitten (ignoriert Kommas innerhalb von Anführungszeichen)
-function parseCSVLine(text) {
-    let result = [];
-    let curValue = "";
-    let inQuote = false;
-    
-    for (let i = 0; i < text.length; i++) {
-        let char = text[i];
-        if (char === '"') {
-            inQuote = !inQuote;
-        } else if (char === ',' && !inQuote) {
-            result.push(curValue.replace(/^"|"$/g, '').trim()); // Anführungszeichen entfernen
-            curValue = "";
-        } else {
-            curValue += char;
-        }
-    }
-    result.push(curValue.replace(/^"|"$/g, '').trim());
-    return result;
-}
-
 function downloadCSV(content) {
     const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", "D2D_Liste_Fertig.csv");
+    link.setAttribute("download", "D2D_Liste_Final.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

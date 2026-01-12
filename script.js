@@ -1,100 +1,102 @@
-document.getElementById('ocr-btn').onclick = async function() {
-    const fileInput = document.getElementById('image-input');
-    const csvAllBtn = document.getElementById('csv-all');
-    const csvStrassenBtn = document.getElementById('csv-strassen');
-    const progressBar = document.getElementById('progress-bar');
-    const progressBarInner = document.getElementById('progress-bar-inner');
-    csvAllBtn.style.display = 'none';
-    csvStrassenBtn.style.display = 'none';
-    progressBar.style.display = 'block';
-    progressBarInner.style.width = '0%';
-
+document.getElementById('convert-btn').onclick = function() {
+    const fileInput = document.getElementById('csv-input');
+    
     if (!fileInput.files.length) {
-        progressBar.style.display = 'none';
-        alert('Bitte wähle mindestens ein Bild aus.');
+        alert('Bitte wähle zuerst eine CSV-Datei aus.');
         return;
     }
 
-    let ocrResults = [];
-    for (let i = 0; i < fileInput.files.length; i++) {
-        const file = fileInput.files[i];
-        progressBarInner.style.width = `${Math.round((i / fileInput.files.length) * 100)}%`;
-        const worker = await Tesseract.createWorker('deu');
-        const { data: { text } } = await worker.recognize(file);
-        await worker.terminate();
-        ocrResults.push({file: file.name, text});
-    }
-    progressBarInner.style.width = '100%';
-    setTimeout(() => { progressBar.style.display = 'none'; }, 500);
+    const file = fileInput.files[0];
+    const reader = new FileReader();
 
-    // Adressen extrahieren (verbesserte Hausnummern-Logik)
-    let adressen = [];
-    for (const result of ocrResults) {
-        const lines = result.text.split('\n').map(l => l.trim()).filter(l => l);
-        for (const line of lines) {
-            let adressenteil = line.split(',')[1]?.trim();
-            if (adressenteil) {
-                // Suche von rechts nach Hausnummer (Zahl mit optionalem Leerzeichen und Buchstabe)
-                let hausnummerMatch = adressenteil.match(/(\d{1,4}\s?[a-zA-Z]?)(?=\s*\d*$)/);
-                let hausnummer = '';
-                let strasse = '';
-                let anzahl = '';
-                if (hausnummerMatch) {
-                    hausnummer = hausnummerMatch[1].replace(/\s+/g, ' ').trim();
-                    strasse = adressenteil.slice(0, hausnummerMatch.index).trim();
-                    // Anzahl ist das letzte Element (nach der Hausnummer)
-                    let parts = adressenteil.slice(hausnummerMatch.index + hausnummer.length).trim().split(/\s+/);
-                    anzahl = parts[parts.length - 1];
-                }
-                if (strasse && hausnummer && anzahl) {
-                    for (let i = 0; i < parseInt(anzahl); i++) {
-                        adressen.push({strasse, hausnummer});
-                    }
-                }
-            }
+    reader.onload = function(e) {
+        const text = e.target.result;
+        processCSV(text);
+    };
+
+    reader.readAsText(file);
+};
+
+function processCSV(csvText) {
+    const lines = csvText.split('\n');
+    let outputRows = [];
+    
+    // Kopfzeile für die neue Datei
+    // Spalten: Straße Hausnummer, Name, Angetroffen, Vertrag, Wohnlage, Kommentar
+    const header = ['Straße Hausnummer', 'Name', 'Angetroffen', 'Vertrag', 'Wohnlage', 'Kommentar'];
+    outputRows.push(header.join(';'));
+
+    // Wir überspringen evtl. die erste Zeile, falls es Header sind. 
+    // In deiner Datei fangen Daten oft direkt an oder nach dem Header.
+    // Wir iterieren durch alle Zeilen.
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        // CSV Parser für Zeilen mit Anführungszeichen (wie in deiner Datei)
+        const columns = parseCSVLine(line);
+
+        // Sicherheitscheck: Genug Spalten vorhanden?
+        if (columns.length < 5) continue;
+
+        // Basierend auf deiner Datei "Nettetal Pyür.csv":
+        // Spalte Index 3: Adresse (z.B. "Breyeller Str. 5")
+        // Spalte Index 4: Anzahl WE (z.B. "5")
+        // Hinweis: Arrays starten bei 0.
+        
+        let address = columns[3]; 
+        let weCount = parseInt(columns[4]);
+
+        // Falls die Header-Zeile erwischt wird (keine Zahl), überspringen
+        if (isNaN(weCount)) continue;
+
+        // Zeilen vervielfachen basierend auf WE Anzahl
+        for (let j = 0; j < weCount; j++) {
+            // Erstelle eine Zeile: Adresse;;;;;
+            // Semikolon-getrennt für Excel/CSV Öffnung in Deutschland
+            let row = [
+                `"${address}"`, // Adresse in Anführungszeichen zur Sicherheit
+                "", // Name leer
+                "", // Angetroffen leer
+                "", // Vertrag leer
+                "", // Wohnlage leer
+                ""  // Kommentar leer
+            ];
+            outputRows.push(row.join(';'));
         }
     }
 
-    if (adressen.length > 0) {
-        csvAllBtn.style.display = '';
-        csvStrassenBtn.style.display = '';
+    downloadCSV(outputRows.join('\n'));
+}
 
-        csvAllBtn.onclick = function() {
-            let csv = 'Straße;Hausnummer;Name;Angetroffen;Vertrag;Lohnt sich;Grund\n';
-            adressen.forEach(a => {
-                csv += `${a.strasse};${a.hausnummer};;;;;\n`;
-            });
-            const blob = new Blob([csv], {type: 'text/csv'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'alle_adressen.csv';
-            a.click();
-            URL.revokeObjectURL(url);
-        };
-
-        csvStrassenBtn.onclick = function() {
-            // Für jede Straße alle passenden Einträge aus adressen nehmen und als ZIP packen
-            let strassenSet = new Set(adressen.map(a => a.strasse));
-            let zip = new JSZip();
-            strassenSet.forEach(strasse => {
-                let csv = 'Straße;Hausnummer;Name;Angetroffen;Vertrag;Lohnt sich;Grund\n';
-                adressen.filter(a => a.strasse === strasse).forEach(a => {
-                    csv += `${a.strasse};${a.hausnummer};;;;;\n`;
-                });
-                zip.file(`${strasse.replace(/\W+/g,'_')}.csv`, csv);
-            });
-            zip.generateAsync({type: 'blob'}).then(function(content) {
-                const url = URL.createObjectURL(content);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'strassen_csv.zip';
-                a.click();
-                URL.revokeObjectURL(url);
-            });
-        };
-    } else {
-        csvAllBtn.style.display = 'none';
-        csvStrassenBtn.style.display = 'none';
+// Hilfsfunktion: CSV Zeile korrekt splitten (ignoriert Kommas innerhalb von Anführungszeichen)
+function parseCSVLine(text) {
+    let result = [];
+    let curValue = "";
+    let inQuote = false;
+    
+    for (let i = 0; i < text.length; i++) {
+        let char = text[i];
+        if (char === '"') {
+            inQuote = !inQuote;
+        } else if (char === ',' && !inQuote) {
+            result.push(curValue.replace(/^"|"$/g, '').trim()); // Anführungszeichen entfernen
+            curValue = "";
+        } else {
+            curValue += char;
+        }
     }
-}; 
+    result.push(curValue.replace(/^"|"$/g, '').trim());
+    return result;
+}
+
+function downloadCSV(content) {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "D2D_Liste_Fertig.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}

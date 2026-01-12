@@ -2,12 +2,13 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Pyür Liste Konverter</title>
+    <title>Pyür Liste Konverter (Excel)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <script defer src="script.js"></script>
     <style>
         :root {
-            --primary-color: #E60000; /* Vodafone/Pyur rot Style */
+            --primary-color: #E60000;
             --bg-color: #F5F5F5;
             --white: #FFFFFF;
         }
@@ -43,11 +44,11 @@
 </head>
 <body>
     <div class="container">
-        <h1>Liste Konvertieren</h1>
-        <p>Lade die CSV-Datei von der Arbeit hoch.</p>
+        <h1>Excel-Liste erstellen</h1>
+        <p>Lade die CSV-Datei hoch. Die Ausgabe ist eine farbige Excel-Datei.</p>
         <input type="file" id="csv-input" accept=".csv">
         <br>
-        <button id="convert-btn">Liste erstellen & Herunterladen</button>
+        <button id="convert-btn">Excel herunterladen</button>
     </div>
 </body>
 </html>

@@ -2,53 +2,127 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Pyür Liste Konverter (Excel)</title>
+    <title>Pyür Listen-Konverter</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <script defer src="script.js"></script>
     <style>
         :root {
-            --primary-color: #E60000;
-            --bg-color: #F5F5F5;
+            /* Pyur Farben */
+            --pyur-red: #E60000;
+            --pyur-dark: #333333;
+            --pyur-light-gray: #F5F5F5;
             --white: #FFFFFF;
+            --shadow: 0 8px 30px rgba(0,0,0,0.12);
         }
+
         body {
-            font-family: sans-serif;
-            background: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--pyur-light-gray);
+            margin: 0;
+            padding: 0;
             display: flex;
             justify-content: center;
-            padding-top: 50px;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--pyur-dark);
         }
+
         .container {
             background: var(--white);
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
             text-align: center;
-            max-width: 600px;
-            width: 100%;
+            max-width: 500px;
+            width: 90%;
+            border-top: 6px solid var(--pyur-red); /* Roter Akzent oben */
         }
-        h1 { color: var(--primary-color); }
-        input[type="file"] { margin: 20px 0; }
-        button {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
+
+        h1 {
+            color: var(--pyur-red);
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        p.subtitle {
+            color: #666;
+            margin-bottom: 2.5rem;
+            font-size: 1.1rem;
+        }
+
+        /* Das Upload-Feld stylen */
+        .file-upload-wrapper {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        input[type="file"] {
             font-size: 1rem;
+            padding: 10px;
+            background: #fafafa;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            width: 100%;
+            box-sizing: border-box;
             cursor: pointer;
+            transition: border-color 0.3s;
         }
-        button:hover { background: #b30000; }
+
+        input[type="file"]:hover {
+            border-color: var(--pyur-red);
+        }
+
+        /* Der Button im Pyur-Style */
+        button {
+            background-color: var(--pyur-red);
+            color: var(--white);
+            border: none;
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+            box-shadow: 0 4px 15px rgba(230, 0, 0, 0.3);
+        }
+
+        button:hover {
+            background-color: #cc0000;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(230, 0, 0, 0.4);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        /* Fußzeile */
+        .footer {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: #aaa;
+        }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <h1>Excel-Liste erstellen</h1>
-        <p>Lade die CSV-Datei hoch. Die Ausgabe ist eine farbige Excel-Datei.</p>
-        <input type="file" id="csv-input" accept=".csv">
-        <br>
-        <button id="convert-btn">Excel herunterladen</button>
+        <h1>D2D Konverter</h1>
+        <p class="subtitle">Wandle deine CSV-Arbeitsliste in eine <br>fertige Excel-Tabelle um.</p>
+        
+        <div class="file-upload-wrapper">
+            <input type="file" id="csv-input" accept=".csv">
+        </div>
+
+        <button id="convert-btn">Liste umwandeln</button>
+
+        <div class="footer">
+            Tool für effizienteres Arbeiten
+        </div>
     </div>
+
 </body>
 </html>

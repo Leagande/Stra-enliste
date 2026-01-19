@@ -26,8 +26,8 @@ function processCSV(csvText, fileName) {
     const lines = csvText.split('\n');
     let outputRows = [];
     
-    // Header für die neue Datei
-    const header = ['Straße Hausnummer', 'Name', 'Angetroffen', 'Vertrag', 'Wohnlage', 'Kommentar'];
+    // NEU: "Kunde ?" wurde hier eingefügt
+    const header = ['Straße Hausnummer', 'Name', 'Kunde ?', 'Angetroffen', 'Vertrag', 'Wohnlage', 'Kommentar'];
     outputRows.push(header.join(';'));
 
     for (let i = 0; i < lines.length; i++) {
@@ -54,11 +54,12 @@ function processCSV(csvText, fileName) {
         for (let j = 0; j < weCount; j++) {
             let row = [
                 `"${address}"`, 
-                "", 
-                "", 
-                "", 
-                "", 
-                ""
+                "", // Name
+                "", // Kunde ? (NEU: Leeres Feld)
+                "", // Angetroffen
+                "", // Vertrag
+                "", // Wohnlage
+                ""  // Kommentar
             ];
             outputRows.push(row.join(';'));
         }
@@ -68,7 +69,7 @@ function processCSV(csvText, fileName) {
 }
 
 function downloadCSV(content, fileName) {
-    // BOM hinzufügen damit Excel/Windows Umlaute richtig erkennt
+    // BOM hinzufügen, damit Excel Umlaute richtig erkennt
     const blob = new Blob(["\ufeff" + content], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");

@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Pyür Listen-Konverter</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <script defer src="script.js"></script>
     <style>
         :root {
@@ -36,7 +35,7 @@
             text-align: center;
             max-width: 500px;
             width: 90%;
-            border-top: 6px solid var(--pyur-red); /* Roter Akzent oben */
+            border-top: 6px solid var(--pyur-red);
         }
 
         h1 {
@@ -53,7 +52,6 @@
             font-size: 1.1rem;
         }
 
-        /* Das Upload-Feld stylen */
         .file-upload-wrapper {
             margin-bottom: 2rem;
             position: relative;
@@ -75,7 +73,6 @@
             border-color: var(--pyur-red);
         }
 
-        /* Der Button im Pyur-Style */
         button {
             background-color: var(--pyur-red);
             color: var(--white);
@@ -99,7 +96,6 @@
             transform: translateY(1px);
         }
 
-        /* Fußzeile */
         .footer {
             margin-top: 2rem;
             font-size: 0.8rem;
@@ -108,21 +104,19 @@
     </style>
 </head>
 <body>
-
     <div class="container">
         <h1>D2D Konverter</h1>
-        <p class="subtitle">Wandle deine CSV-Arbeitsliste in eine <br>fertige Excel-Tabelle um.</p>
+        <p class="subtitle">Wandle deine CSV-Arbeitsliste in eine <br>fertige CSV-Datei um.</p>
         
         <div class="file-upload-wrapper">
             <input type="file" id="csv-input" accept=".csv">
         </div>
 
-        <button id="convert-btn">Liste umwandeln</button>
+        <button id="convert-btn">CSV erstellen</button>
 
         <div class="footer">
             Tool für effizienteres Arbeiten
         </div>
     </div>
-
 </body>
 </html>

@@ -26,7 +26,7 @@ function processCSV(csvText, fileName) {
     const lines = csvText.split('\n');
     let outputRows = [];
     
-    // NEU: "Kunde ?" wurde hier eingefügt
+    // Header bleibt gleich
     const header = ['Straße Hausnummer', 'Name', 'Kunde ?', 'Angetroffen', 'Vertrag', 'Wohnlage', 'Kommentar'];
     outputRows.push(header.join(';'));
 
@@ -45,9 +45,14 @@ function processCSV(csvText, fileName) {
         // Sicherheitscheck
         if (columns.length < 5) continue;
 
-        const address = columns[3].trim();
+        // --- HIER IST DIE ÄNDERUNG ---
+        // Früher: columns[3] -> Jetzt: columns[2] (Die Adresse ist nach links gerutscht)
+        const address = columns[2].trim();
+        
+        // Die Anzahl WE ist weiterhin in columns[4] (ganz rechts)
         let weCount = parseInt(columns[4]);
 
+        // Falls die Umwandlung fehlschlägt, überspringen
         if (isNaN(weCount) || weCount <= 0) continue;
 
         // Zeilen vervielfachen
@@ -55,7 +60,7 @@ function processCSV(csvText, fileName) {
             let row = [
                 `"${address}"`, 
                 "", // Name
-                "", // Kunde ? (NEU: Leeres Feld)
+                "", // Kunde ?
                 "", // Angetroffen
                 "", // Vertrag
                 "", // Wohnlage
@@ -69,7 +74,7 @@ function processCSV(csvText, fileName) {
 }
 
 function downloadCSV(content, fileName) {
-    // BOM hinzufügen, damit Excel Umlaute richtig erkennt
+    // BOM für Umlaute
     const blob = new Blob(["\ufeff" + content], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");

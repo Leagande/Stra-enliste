@@ -8,7 +8,7 @@ document.getElementById('convert-btn').onclick = function() {
 
     const file = fileInput.files[0];
     
-    // Dateiname anpassen: .csv entfernen und " Fertig.csv" anhängen
+    // Dateiname anpassen
     const originalName = file.name.replace(/\.[^/.]+$/, "");
     const newFileName = `${originalName} Fertig.csv`;
 
@@ -26,7 +26,7 @@ function processCSV(csvText, fileName) {
     const lines = csvText.split('\n');
     let outputRows = [];
     
-    // Header bleibt gleich
+    // Header (Kopfzeile) wie gewünscht
     const header = ['Straße Hausnummer', 'Name', 'Kunde ?', 'Angetroffen', 'Vertrag', 'Wohnlage', 'Kommentar'];
     outputRows.push(header.join(';'));
 
@@ -34,7 +34,7 @@ function processCSV(csvText, fileName) {
         let line = lines[i].trim();
         if (!line) continue;
 
-        // Anführungszeichen bereinigen
+        // Anführungszeichen bereinigen (vorne und hinten weg)
         if (line.startsWith('"') && line.endsWith('"')) {
             line = line.substring(1, line.length - 1);
         }
@@ -42,17 +42,17 @@ function processCSV(csvText, fileName) {
         // Trennung am ","
         const columns = line.split('","');
 
-        // Sicherheitscheck
-        if (columns.length < 5) continue;
+        // Sicherheitscheck: Jetzt reichen uns 2 Spalten
+        if (columns.length < 2) continue;
 
-        // --- HIER IST DIE ÄNDERUNG ---
-        // Früher: columns[3] -> Jetzt: columns[2] (Die Adresse ist nach links gerutscht)
-        const address = columns[2].trim();
+        // --- ANPASSUNG FÜR DIE NEUE DATEI ---
+        // Die Adresse ist jetzt direkt vorne (Index 0)
+        const address = columns[0].trim();
         
-        // Die Anzahl WE ist weiterhin in columns[4] (ganz rechts)
-        let weCount = parseInt(columns[4]);
+        // Die Anzahl WE ist direkt danach (Index 1)
+        let weCount = parseInt(columns[1]);
 
-        // Falls die Umwandlung fehlschlägt, überspringen
+        // Falls keine gültige Zahl gefunden wird (z.B. in der Kopfzeile), überspringen
         if (isNaN(weCount) || weCount <= 0) continue;
 
         // Zeilen vervielfachen
@@ -74,7 +74,6 @@ function processCSV(csvText, fileName) {
 }
 
 function downloadCSV(content, fileName) {
-    // BOM für Umlaute
     const blob = new Blob(["\ufeff" + content], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");

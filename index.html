@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <title>Pyür Listen-Konverter</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script defer src="script.js"></script>
     <style>
         :root {
-            /* Pyur Farben */
             --pyur-red: #E60000;
             --pyur-dark: #333333;
             --pyur-light-gray: #F5F5F5;
@@ -54,7 +54,6 @@
 
         .file-upload-wrapper {
             margin-bottom: 2rem;
-            position: relative;
         }
 
         input[type="file"] {
@@ -73,23 +72,35 @@
             border-color: var(--pyur-red);
         }
 
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            justify-content: center;
+        }
+
         button {
             background-color: var(--pyur-red);
             color: var(--white);
             border: none;
-            padding: 1rem 2.5rem;
+            padding: 1rem 2rem;
             border-radius: 50px;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
             box-shadow: 0 4px 15px rgba(230, 0, 0, 0.3);
+            width: 100%;
+        }
+
+        button.secondary {
+            background-color: #333; /* Dunklerer Button für ZIP */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         button:hover {
-            background-color: #cc0000;
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(230, 0, 0, 0.4);
+            opacity: 0.9;
         }
 
         button:active {
@@ -106,13 +117,16 @@
 <body>
     <div class="container">
         <h1>D2D Konverter</h1>
-        <p class="subtitle">Wandle deine CSV-Arbeitsliste in eine <br>fertige CSV-Datei um.</p>
+        <p class="subtitle">Wähle deinen Export-Modus</p>
         
         <div class="file-upload-wrapper">
             <input type="file" id="csv-input" accept=".csv">
         </div>
 
-        <button id="convert-btn">CSV erstellen</button>
+        <div class="btn-group">
+            <button id="convert-btn">Alles in eine Liste (CSV)</button>
+            <button id="zip-btn" class="secondary">Pro Straße eine Datei (ZIP)</button>
+        </div>
 
         <div class="footer">
             Tool für effizienteres Arbeiten
